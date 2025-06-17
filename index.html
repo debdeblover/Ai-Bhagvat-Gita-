@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="bn">  
+<head>  
+  <meta charset="UTF-8" />  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>  
+  <title>ভগবদ গীতা</title>  
+  <script src="https://cdn.tailwindcss.com"></script>  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>  
+</head>  
+<body class="bg-yellow-50 text-gray-800 p-6 font-sans">    
+  <h1 class="text-3xl font-bold text-center mb-6">ভগবদ গীতা</h1>    
+  <div class="max-w-3xl mx-auto mb-6 flex flex-col sm:flex-row gap-4">  
+    <input type="text" id="search" class="flex-1 border rounded px-4 py-2" placeholder="শ্লোক বা অনুবাদ লিখুন..." />  
+    <select id="chapterFilter" class="border rounded px-4 py-2">  
+      <option value="0">সব অধ্যায়</option>  
+    </select>  
+  </div>    
+  <div id="shlokaContainer" class="space-y-4 max-w-3xl mx-auto"></div>    
+  <div class="text-center mt-8">  
+    <button onclick="downloadPDF()" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">  
+      📄 পিডিএফ ডাউনলোড করুন  
+    </button>  
+  </div>    
+
+  <script>
+    const shlokas = [
+      { id: 1, chapter: 2, sanskrit: "কর্মণ্যেবাধিকারস্তে মা ফলেষু কদাচন।\nমা কর্মফলহেতুর্ভূর্মা তে সঙ্গোস্ত্বকর্মণি॥", translation: "তোমার কাজ করার অধিকার আছে, কিন্তু ফলের অধিকার নেই।", audio: "audio/shlok1.mp3" },
+      { id: 2, chapter: 18, sanskrit: "অহং ত্বাং সর্বপাপে ভ্যো মোক্ষয়িষ্যামি মা শুচঃ॥", translation: "আমি তোমায় সমস্ত পাপ থেকে মুক্তি দেবো। ভয় করো না।", audio: "audio/shlok2.mp3" },
+      { id: 3, chapter: 2, sanskrit: "যোগস্থঃ কুরু কর্মাণি...", translation: "হে অর্জুন, সফলতা ও ব্যর্থতার প্রতি সমভাবে থেকো...", audio: "audio/shlok3.mp3" }
+    ];
+
+    const container = document.getElementById("shlokaContainer");
+    const search = document.getElementById("search");
+    const chapterFilter = document.getElementById("chapterFilter");
+
+    const renderShlokas = () => {
+      const term = search.value.toLowerCase();
+      const chapter = parseInt(chapterFilter.value);
+      container.innerHTML = "";
+
+      const filtered = shlokas.filter(s => 
+        (chapter === 0 || s.chapter === chapter) &&
+        (s.sanskrit.includes(term) || s.translation.includes(term))
+      );
+
+      filtered.forEach(shlok => {
+        const card = document.createElement("div");
+        card.className = "bg-white p-4 rounded shadow";
+        card.innerHTML = `
+          <p class="whitespace-pre-line text-lg">${shlok.sanskrit}</p>
+          <p class="mt-2 italic text-gray-700">${shlok.translation}</p>
+          <button onclick="new Audio('${shlok.audio}').play()" class="mt-4 px-4 py-1 bg-blue-600 text-white rounded hover:bg-blue-700">
+            🔊 শ্লোক শুনুন
+          </button>`;
+        container.appendChild(card);
+      });
+    };
+
+    const downloadPDF = () => {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      let y = 10;
+      const term = search.value.toLowerCase();
+      const chapter = parseInt(chapterFilter.value);
+      const filtered = shlokas.filter(s =>
+        (chapter === 0 || s.chapter === chapter) &&
+        (s.sanskrit.includes(term) || s.translation.includes(term))
+      );
+
+      filtered.forEach((s, i) => {
+        doc.text(`শ্লোক ${i + 1}`, 10, y);
+        y += 8;
+        doc.text(s.sanskrit, 10, y);
+        y += 10;
+        doc.text(`অনুবাদ: ${s.translation}`, 10, y);
+        y += 20;
+      });
+      doc.save("Bhagavad_Gita_Bengali.pdf");
+    };
+
+    const chapters = [...new Set(shlokas.map(s => s.chapter))];
+    chapters.forEach(c => {
+      const opt = document.createElement("option");
+      opt.value = c;
+      opt.textContent = `অধ্যায় ${c}`;
+      chapterFilter.appendChild(opt);
+    });
+
+    search.addEventListener("input", renderShlokas);
+    chapterFilter.addEventListener("change", renderShlokas);
+    renderShlokas();
+  </script>
+</body>  
+</html>
